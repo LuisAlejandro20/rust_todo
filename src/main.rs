@@ -23,7 +23,9 @@ struct Task {
 enum Commands {
     /// Add a new task to the list
     Add {
-        item: String
+        item: String,
+        #[arg(short, long, default_value_t = 1)]
+        priority: u8,
     },
     /// Mark a task as complete
     Complete {
@@ -58,10 +60,10 @@ impl Todo {
         }
     }
 
-    fn insert(&mut self, key: String) {
+    fn insert(&mut self, key: String, priority: u8) {
         let new_task = Task {
             active: true,
-            priority: 1,
+            priority,
         };
         self.map.insert(key, new_task);
     }
@@ -109,12 +111,12 @@ fn main() {
     let mut todo = Todo::new().expect("Initialization of db failed");
 
     match &cli.command {
-        Commands::Add { item } => {
-            todo.insert(item.to_string());
+        Commands::Add { item, priority } => {
+            todo.insert(item.to_string(), *priority);
             if let Err(why) = todo.save() {
                 println!("An error occurred: {why}");
             } else {
-                println!("Task added successfully.");
+                println!("Task added successfully with priority {priority}.");
             }
         }
         Commands::Complete { item} => {
