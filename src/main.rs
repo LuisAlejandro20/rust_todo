@@ -33,6 +33,17 @@ enum Commands {
     },
     /// List all current tasks
     List,
+    /// Edit an existing task's name or priority
+    Edit {
+        /// The current task's name
+        item: String,
+        // The new task's name
+        #[arg(short, long)]
+        name: Option<String>,
+        /// The new priority level
+        #[arg(short, long)]
+        priority: Option<u8>,
+    },
 }
 
 
@@ -70,6 +81,15 @@ fn main() {
         }
         Commands::List => {
             todo.list();
+        }
+        Commands::Edit { item, name, priority } => {
+            if todo.edit(item, name.clone(), *priority).is_none() {
+                println!("'{}' is not present in the list", item);
+            } else if let Err(why) = todo.save() {
+                println!("An error occurred: {why}");
+            } else {
+                println!("Task updated successfully.")
+            }
         }
     }
 }
