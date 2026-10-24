@@ -62,8 +62,12 @@ impl Todo {
             return;
         }
 
+        let mut tasks: Vec<(&String, &Task)> = self.map.iter().collect();
+
+        tasks.sort_by(|a,b| b.1.priority.cmp(&a.1.priority));
+
         println!("Your tasks:");
-        for (key, task) in &self.map {
+        for (key, task) in tasks {
             let status = if task.active { "[ ]" } else { "[ ]" };
             println!("{} {} (Priority: {})", status, key, task.priority);
         }
