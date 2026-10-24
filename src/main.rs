@@ -65,6 +65,13 @@ impl Todo {
             println!("{status} {key}");
         }
     }
+
+    fn remove(&mut self, key: &String) -> Option<()> {
+        match self.map.remove(key) {
+            Some(_) => Some(()),
+            None => None,
+        }
+    }
 }
 
 fn main() {
@@ -90,6 +97,15 @@ fn main() {
         }
     } else if action == "list" {
         todo.list();
+    } else if action == "remove" {
+        let item = std::env::args().nth(2).expect("Please specify an item to remove");
+        match todo.remove(&item) {
+            None => println!("'{item}' is not on the list"),
+            Some(_) => match todo.save() {
+                Ok(_) => println!("todo removed and saved"),
+                Err(why) => println!("An error occurred: {why}"),
+            },
+        }
     }
      else {
         println!("Unknown action. Use 'add' or 'complete'.");
