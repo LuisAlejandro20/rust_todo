@@ -8,9 +8,24 @@ struct Todo {
 
 impl Todo {
     fn new() -> Result<Todo, std::io::Error> {
-        Ok(Todo {
-            map: HashMap::new(),
-        })
+        let mut map = HashMap::new();
+
+        let contents = std::fs::read_to_string("db.txt");
+        
+        if let Ok(data) = contents {
+            for line in data.lines() {
+                let mut parts = line.split('\t');
+
+                let key = parts.next().expect("Missing task description");
+                let val = parts.next().expect("Missing task status");
+
+                let is_active = val.parse::<bool>().unwrap_or(true);
+
+                map.insert(key.to_string(), is_active);
+            }
+        }
+
+        Ok(Todo { map })
     }
 
     fn insert(&mut self, key: String) {
