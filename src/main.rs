@@ -13,6 +13,12 @@ struct Cli {
     command: Commands,
 }
 
+#[derive(Serialize, Deserialize)]
+struct Task {
+    active: bool,
+    priority: u8, 
+}
+
 #[derive(Subcommand)]
 enum Commands {
     /// Add a new task to the list
@@ -32,7 +38,7 @@ enum Commands {
 }
 #[derive(Serialize, Deserialize)]
 struct Todo {
-    map: HashMap<String, bool>
+    map: HashMap<String, Task>
 }
 
 impl Todo {
@@ -53,7 +59,11 @@ impl Todo {
     }
 
     fn insert(&mut self, key: String) {
-        self.map.insert(key, true);
+        let new_task = Task {
+            active: true,
+            priority: 1,
+        };
+        self.map.insert(key, new_task);
     }
 
     fn save(&self) -> Result<(), std::io::Error> {
@@ -64,8 +74,8 @@ impl Todo {
 
     fn complete(&mut self, key: &String) -> Option<()> {
         match self.map.get_mut(key) {
-            Some(v) => {
-                *v = false;
+            Some(task) => {
+                task.active = false;
                 Some(())
             }
             None => None,
@@ -79,9 +89,9 @@ impl Todo {
         }
 
         println!("Your tasks:");
-        for (key, value) in &self.map {
-            let status = if *value { "[ ]" } else { "[x]"};
-            println!("{status} {key}");
+        for (key, task) in &self.map {
+            let status = if task.active { "[ ]" } else { "[x]"};
+            println!("{status} {key} (Priority: {})", task.priority)
         }
     }
 
