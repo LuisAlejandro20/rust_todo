@@ -1,8 +1,9 @@
-use std::collections::HashMap;
-use std::fs::File; //Para crear  y abrir archivos
-use std::io::Write; // Un trait para escribir bytes en un archivo
 use clap::{Parser, Subcommand};
-use serde::{Serialize, Deserialize};
+
+mod todo;
+
+use todo::Todo;
+
 
 #[derive(Parser)]
 #[command(name = "Todo List")]
@@ -13,11 +14,6 @@ struct Cli {
     command: Commands,
 }
 
-#[derive(Serialize, Deserialize)]
-struct Task {
-    active: bool,
-    priority: u8, 
-}
 
 #[derive(Subcommand)]
 enum Commands {
@@ -38,72 +34,7 @@ enum Commands {
     /// List all current tasks
     List,
 }
-#[derive(Serialize, Deserialize)]
-struct Todo {
-    map: HashMap<String, Task>
-}
 
-impl Todo {
-    fn new() -> Result<Todo, std::io::Error> {
-        let file = std::fs::File::open("db.json");
-
-        match file {
-            Ok(f) => {
-                let map = serde_json::from_reader(f)?;
-                Ok(Todo {map})
-            }
-            Err(_) => {
-                Ok( Todo {
-                    map: HashMap::new()
-                })
-            }
-        }
-    }
-
-    fn insert(&mut self, key: String, priority: u8) {
-        let new_task = Task {
-            active: true,
-            priority,
-        };
-        self.map.insert(key, new_task);
-    }
-
-    fn save(&self) -> Result<(), std::io::Error> {
-        let file = std::fs::File::create("db.json")?;
-        serde_json::to_writer_pretty(file, &self.map)?;
-        Ok(())
-    }
-
-    fn complete(&mut self, key: &String) -> Option<()> {
-        match self.map.get_mut(key) {
-            Some(task) => {
-                task.active = false;
-                Some(())
-            }
-            None => None,
-        }
-    }
-
-    fn list(&self) {
-        if self.map.is_empty() {
-            println!("You to-do list is empty.");
-            return;
-        }
-
-        println!("Your tasks:");
-        for (key, task) in &self.map {
-            let status = if task.active { "[ ]" } else { "[x]"};
-            println!("{status} {key} (Priority: {})", task.priority)
-        }
-    }
-
-    fn remove(&mut self, key: &String) -> Option<()> {
-        match self.map.remove(key) {
-            Some(_) => Some(()),
-            None => None,
-        }
-    }
-}
 
 fn main() {
     let cli = Cli::parse();
