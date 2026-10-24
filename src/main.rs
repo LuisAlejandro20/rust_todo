@@ -10,6 +10,10 @@ impl Todo {
             map: HashMap::new(),
         })
     }
+
+    fn insert(&mut self, key: String) {
+        self.map.insert(key, true);
+    }
 }
 
 fn main() {
