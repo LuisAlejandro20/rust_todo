@@ -1,7 +1,34 @@
 use std::collections::HashMap;
 use std::fs::File; //Para crear  y abrir archivos
 use std::io::Write; // Un trait para escribir bytes en un archivo
+use clap::{Parser, Subcommand};
 
+#[derive(Parser)]
+#[command(name = "Todo List")]
+#[command(version = "1.0")]
+#[command(about = "A simple CLI task manager built in Rust")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Add a new task to the list
+    Add {
+        item: String
+    },
+    /// Mark a task as complete
+    Complete {
+        item: String
+    },
+    /// Remove a task from the list
+    Remove {
+        item: String
+    },
+    /// List all current tasks
+    List,
+}
 struct Todo {
     map: HashMap<String, bool>
 }
@@ -75,39 +102,39 @@ impl Todo {
 }
 
 fn main() {
-    let action = std::env::args().nth(1).expect("Please specify an action");
+    let cli = Cli::parse();
 
     let mut todo = Todo::new().expect("Initialization of db failed");
 
-    if action == "add" {
-        let item = std::env::args().nth(2).expect("Please specify an item to add");
-        todo.insert(item);
-        match todo.save() {
-            Ok(_) => println!("todo saved"),
-            Err(why) => println!("An error ocurred: {why}"),
+    match &cli.command {
+        Commands::Add { item } => {
+            todo.insert(item.to_string());
+            if let Err(why) = todo.save() {
+                println!("An error occurred: {why}");
+            } else {
+                println!("Task added successfully.");
+            }
         }
-    } else if action == "complete" {
-        let item = std::env::args().nth(2).expect("Please specify an item to complete");
-        match todo.complete(&item) {
-            None => println!("'{item}' is not present in the list"),
-            Some(_) => match todo.save() {
-                Ok(_) => println!("todo saved"),
-                Err(why) => println!("An error occurred: {why}"),
-            },
+        Commands::Complete { item} => {
+            if todo.complete(item).is_none() {
+                println!("'{item}' is not present in the list");
+            } else if let Err(why) = todo.save() {
+                println!("An error occurred: {why}");
+            } else {
+                println!("Task marked as complete");
+            }
         }
-    } else if action == "list" {
-        todo.list();
-    } else if action == "remove" {
-        let item = std::env::args().nth(2).expect("Please specify an item to remove");
-        match todo.remove(&item) {
-            None => println!("'{item}' is not on the list"),
-            Some(_) => match todo.save() {
-                Ok(_) => println!("todo removed and saved"),
-                Err(why) => println!("An error occurred: {why}"),
-            },
+        Commands::Remove {item} => {
+            if todo.remove(item).is_none() {
+                println!("´{item}' is not present in the list");
+            } else if let Err(why) = todo.save() {
+                println!("An error ocurred: {why}");
+            } else {
+                println!("Task removed successfuly");
+            }
         }
-    }
-     else {
-        println!("Unknown action. Use 'add' or 'complete'.");
+        Commands::List => {
+            todo.list();
+        }
     }
 }
