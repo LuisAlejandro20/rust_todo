@@ -42,6 +42,16 @@ impl Todo {
         }
         Ok(())
     }
+
+    fn complete(&mut self, key: &String) -> Option<()> {
+        match self.map.get_mut(key) {
+            Some(v) => {
+                *v = false;
+                Some(())
+            }
+            None => None,
+        }
+    }
 }
 
 fn main() {
@@ -56,5 +66,15 @@ fn main() {
             Ok(_) => println!("todo saved"),
             Err(why) => println!("An error ocurred: {why}"),
         }
+    } else if action == "complete" {
+        match todo.complete(&item) {
+            None => println!("'{item}' is not present in the list"),
+            Some(_) => match todo.save() {
+                Ok(_) => println!("todo saved"),
+                Err(why) => println!("An error occurred: {why}"),
+            },
+        }
+    } else {
+        println!("Unknown action. Use 'add' or 'complete'.");
     }
 }
