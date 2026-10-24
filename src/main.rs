@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fs::File; //Para crear  y abrir archivos
 use std::io::Write; // Un trait para escribir bytes en un archivo
 use clap::{Parser, Subcommand};
+use serde::{Serialize, Deserialize};
 
 #[derive(Parser)]
 #[command(name = "Todo List")]
@@ -29,30 +30,26 @@ enum Commands {
     /// List all current tasks
     List,
 }
+#[derive(Serialize, Deserialize)]
 struct Todo {
     map: HashMap<String, bool>
 }
 
 impl Todo {
     fn new() -> Result<Todo, std::io::Error> {
-        let mut map = HashMap::new();
+        let file = std::fs::File::open("db.json");
 
-        let contents = std::fs::read_to_string("db.txt");
-        
-        if let Ok(data) = contents {
-            for line in data.lines() {
-                let mut parts = line.split('\t');
-
-                let key = parts.next().expect("Missing task description");
-                let val = parts.next().expect("Missing task status");
-
-                let is_active = val.parse::<bool>().unwrap_or(true);
-
-                map.insert(key.to_string(), is_active);
+        match file {
+            Ok(f) => {
+                let map = serde_json::from_reader(f)?;
+                Ok(Todo {map})
+            }
+            Err(_) => {
+                Ok( Todo {
+                    map: HashMap::new()
+                })
             }
         }
-
-        Ok(Todo { map })
     }
 
     fn insert(&mut self, key: String) {
@@ -60,13 +57,8 @@ impl Todo {
     }
 
     fn save(&self) -> Result<(), std::io::Error> {
-        let mut file = File::create("db.txt")?; //Crear archivo
-
-        for (key, value) in &self.map {
-            let record = format!("{}\t{}\n", key, value);
-
-            file.write_all(record.as_bytes())?;
-        }
+        let file = std::fs::File::create("db.json")?;
+        serde_json::to_writer_pretty(file, &self.map)?;
         Ok(())
     }
 
